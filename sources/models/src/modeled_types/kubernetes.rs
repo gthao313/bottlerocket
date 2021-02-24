@@ -3,7 +3,7 @@ use regex::Regex;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 // Just need serde's Error in scope to get its trait methods
 use serde::de::Error as _;
-use snafu::ensure;
+use snafu::{ensure, ResultExt};
 use std::borrow::Borrow;
 use std::convert::TryFrom;
 use std::fmt;
@@ -434,6 +434,74 @@ mod test_kubernetes_bootstrap_token {
     fn bad_names() {
         for err in &["", "ABCDEF.0123456789ABCDEF", "secret", &"a".repeat(23)] {
             KubernetesBootstrapToken::try_from(*err).unwrap_err();
+        }
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// EvictionHardKey represents a string that contains a valid Kubernetes eviction hard signal.
+/// Available eviction hard signals: https://kubernetes.io/docs/tasks/administer-cluster/out-of-resource/
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct EvictionHardKey {
+    inner: String,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum EvitionSignal {
+    #[serde(rename = "memory.available")]
+    MemoryAvailable,
+    #[serde(rename = "nodefs.available")]
+    NodefsAvailable,
+    #[serde(rename = "nodefs.inodesFree")]
+    NodefsInodesFree,
+    #[serde(rename = "imagefs.available")]
+    ImagefsAvailable,
+    #[serde(rename = "imagefs.inodesFree")]
+    ImagefsInodesFree,
+    #[serde(rename = "pid.available")]
+    PidAvailable,
+}
+
+impl TryFrom<&str> for EvictionHardKey {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        serde_plain::from_str::<EvitionSignal>(&input).context(error::InvalidPlainValue {
+            field: "Eviction Hard key",
+        })?;
+        Ok(EvictionHardKey {
+            inner: input.to_string(),
+        })
+    }
+}
+string_impls_for!(EvictionHardKey, "EvictionHardKey");
+
+#[cfg(test)]
+mod test_kubernetes_eviction_hard_key {
+    use super::EvictionHardKey;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_eviction_hard_key() {
+        for ok in &[
+            "memory.available",
+            "nodefs.available",
+            "nodefs.inodesFree",
+            "imagefs.available",
+            "imagefs.inodesFree",
+            "pid.available",
+            ] {
+            EvictionHardKey::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_eviction_hard_key() {
+        for err in &["", "storage.available", ".bad", "bad.", &"a".repeat(64)] {
+            EvictionHardKey::try_from(*err).unwrap_err();
         }
     }
 }

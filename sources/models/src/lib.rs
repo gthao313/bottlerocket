@@ -101,7 +101,7 @@ use crate::modeled_types::{
     DNSDomain, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue, FriendlyVersion, Identifier,
     KubernetesAuthenticationMode, KubernetesBootstrapToken, KubernetesClusterName,
     KubernetesLabelKey, KubernetesLabelValue, KubernetesTaintValue,
-    Lockdown, SingleLineString, SysctlKey, Url, ValidBase64,
+    Lockdown, SingleLineString, SysctlKey, Url, ValidBase64, EvictionHardKey,
 };
 
 // Kubernetes static pod manifest settings
@@ -127,6 +127,9 @@ struct KubernetesSettings {
     authentication_mode: KubernetesAuthenticationMode,
     bootstrap_token: KubernetesBootstrapToken,
     standalone_mode: bool,
+    // Note: Kubelet won't launch if you specify an effect it doesn't know about, but we don't want to
+    // gatekeep all possible values, so we validate if eviction-hard and kube-reserved values are SingleLineString.
+    eviction_hard: HashMap<EvictionHardKey, SingleLineString>,
 
     // Settings where we generate a value based on the runtime environment.  The user can specify a
     // value to override the generated one, but typically would not.
