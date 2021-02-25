@@ -50,6 +50,11 @@ cluster-dns-ip.setting-generator = "pluto cluster-dns-ip"
 node-ip.setting-generator = "pluto node-ip"
 affected-services = ["kubernetes"]
 
+[metadata.settings.kubernetes.kube-reserved]
+cpu.setting-generator = "pluto cpu-reserved"
+memory.setting-generator = "pluto memory-reserved"
+affected-services = ["kubernetes"]
+
 [metadata.settings.kubernetes.pod-infra-container-image]
 setting-generator = "pluto pod-infra-container-image"
 affected-services = ["kubernetes", "containerd"]
@@ -58,6 +63,7 @@ affected-services = ["kubernetes", "containerd"]
 cluster-domain = "cluster.local"
 standalone-mode = false
 authentication-mode = "aws"
+kube-reserved.ephemeral-storage = "1Gi"
 
 # Metrics
 [settings.metrics]

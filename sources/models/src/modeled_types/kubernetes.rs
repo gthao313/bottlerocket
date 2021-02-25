@@ -505,3 +505,58 @@ mod test_kubernetes_eviction_hard_key {
         }
     }
 }
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// ReservedResourcesKey represents a string that contains a valid Kubernetes kubeReserved
+/// and systemReserved resources i.e. cpu, memory.
+/// https://kubernetes.io/docs/tasks/administer-cluster/reserve-compute-resources/
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct ReservedResourcesKey {
+    inner: String,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum ReservedResources {
+    Cpu,
+    Memory,
+    #[serde(rename = "ephemeral-storage")]
+    EphemeralStorage,
+}
+
+impl TryFrom<&str> for ReservedResourcesKey {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+
+        serde_plain::from_str::<ReservedResources>(&input).context(error::InvalidPlainValue {
+            field: "Reserved sources key",
+        })?;
+        Ok(ReservedResourcesKey {
+            inner: input.to_string(),
+        })
+    }
+}
+string_impls_for!(ReservedResourcesKey, "ReservedResourcesKey");
+
+#[cfg(test)]
+mod test_reserved_resources_key {
+    use super::ReservedResourcesKey;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_reserved_resources_key() {
+        for ok in &["cpu", "memory", "ephemeral-storage"] {
+            ReservedResourcesKey::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_reserved_resources_key() {
+        for err in &["", "cpa", ".bad", "bad.", &"a".repeat(64)] {
+            ReservedResourcesKey::try_from(*err).unwrap_err();
+        }
+    }
+}

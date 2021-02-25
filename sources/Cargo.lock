@@ -2322,6 +2322,7 @@ version = "0.1.0"
 dependencies = [
  "cargo-readme",
  "lazy_static",
+ "num_cpus",
  "reqwest",
  "serde_json",
  "snafu",

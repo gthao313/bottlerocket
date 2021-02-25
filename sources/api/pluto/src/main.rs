@@ -15,6 +15,7 @@ It makes calls to IMDS to get meta data:
 */
 
 use lazy_static::lazy_static;
+use num_cpus;
 use reqwest::blocking::Client;
 use std::collections::HashMap;
 use std::fs::File;
@@ -146,9 +147,9 @@ mod error {
             source: std::io::Error,
         },
 
-        #[snafu(display("Failed to parse setting {} as u32: {}", setting, source))]
+        #[snafu(display("Failed to parse {} as u32: {}", object, source))]
         ParseToU32 {
-            setting: String,
+            object: String,
             source: std::num::ParseIntError,
         },
 
@@ -270,11 +271,76 @@ fn pause_container_uri(region: &str) -> Result<String> {
     ))
 }
 
+/// Calculates the amount of memory to reserve for kubeReserved in mebibytes.
+/// This function is taken from:
+/// https://github.com/awslabs/amazon-eks-ami/blob/db28da15d2b696bc08ac3aacc9675694f4a69933/files/bootstrap.sh#L228-L239
+fn get_memory_mebibytes_to_reserve(client: &Client, session_token: &str) -> Result<String> {
+    let max_num_pods = get_max_pods(&client, &session_token)?;
+    let mebibytes_unit = "Mi";
+    let max_num_pods_u32 = max_num_pods.parse::<u32>().context(error::ParseToU32 {
+        object: max_num_pods,
+    })?;
+    let memory_to_reserve = max_num_pods_u32 * 11 + 255;
+
+    Ok(memory_to_reserve.to_string() + mebibytes_unit)
+}
+
+/// Calculates the amount of CPU to reserve for kubeReserved in millicores
+/// from the total number of vCPUs available on the instance.
+/// We are using these CPU ranges from GKE
+/// (https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-architecture#node_allocatable):
+///  6% of the first core
+///  1% of the next core (up to 2 cores)
+///  0.5% of the next 2 cores (up to 4 cores)
+///  0.25% of any cores above 4 cores
+/// This function is taken from:
+/// https://github.com/awslabs/amazon-eks-ami/blob/db28da15d2b696bc08ac3aacc9675694f4a69933/files/bootstrap.sh#L241-L251
+fn get_cpu_millicores_to_reserve() -> Result<String> {
+    let total_cpu_on_instance = num_cpus::get() * 1000;
+    let cpu_ranges = vec![0, 1000, 2000, 4000, total_cpu_on_instance];
+    let cpu_percentage_reserved_for_ranges = vec![600, 100, 50, 25];
+    let mut cpu_to_reserve = 0;
+    let millicores_unit = "m";
+
+    for i in 0..(cpu_percentage_reserved_for_ranges.len() - 1) {
+        let start_range = cpu_ranges[i];
+        let end_range = cpu_ranges[i + 1];
+        let percentage_to_reserve_for_range = cpu_percentage_reserved_for_ranges[i];
+
+        cpu_to_reserve += get_resource_to_reserve_in_range(
+            total_cpu_on_instance,
+            start_range,
+            end_range,
+            percentage_to_reserve_for_range,
+        )
+    }
+
+    Ok(cpu_to_reserve.to_string() + millicores_unit)
+}
+
+/// This function is taken from:
+/// https://github.com/awslabs/amazon-eks-ami/blob/db28da15d2b696bc08ac3aacc9675694f4a69933/files/bootstrap.sh#L203-L226
+fn get_resource_to_reserve_in_range(
+    total_resource_on_instance: usize,
+    start_range: usize,
+    mut end_range: usize,
+    percentage: usize,
+) -> usize {
+    let mut resources_to_reserve = 0;
+    if total_resource_on_instance > start_range {
+        if total_resource_on_instance < end_range {
+            end_range = total_resource_on_instance;
+        };
+        resources_to_reserve = (end_range - start_range) * percentage / 100 / 100;
+    }
+    resources_to_reserve
+}
+
 /// Print usage message.
 fn usage() -> ! {
     let program_name = env::args().next().unwrap_or_else(|| "program".to_string());
     eprintln!(
-        r"Usage: {} [max-pods | cluster-dns-ip | node-ip | pod-infra-container-image]",
+        r"Usage: {} [ cpu-reserved | memory-reserved | max-pods | cluster-dns-ip | node-ip | pod-infra-container-image ]",
         program_name
     );
     process::exit(1);
@@ -305,6 +371,8 @@ fn run() -> Result<()> {
         "cluster-dns-ip" => get_cluster_dns_ip(&client, &imds_session_token),
         "node-ip" => get_node_ip(&client, &imds_session_token),
         "pod-infra-container-image" => get_pod_infra_container_image(&client, &imds_session_token),
+        "memory-reserved" => get_memory_mebibytes_to_reserve(&client, &imds_session_token),
+        "cpu-reserved" => get_cpu_millicores_to_reserve(),
 
         // If we want to specify a reasonable default in a template, we can exit 2 to tell
         // sundog to skip this setting.
@@ -321,7 +389,7 @@ fn run() -> Result<()> {
         let max_pods = serde_json::to_string(
             &setting
                 .parse::<u32>()
-                .context(error::ParseToU32 { setting: &setting })?,
+                .context(error::ParseToU32 { object: &setting })?,
         )
         .context(error::OutputJson { output: &setting })?;
         println!("{}", max_pods);
@@ -380,6 +448,27 @@ mod test_pause_container_account {
                 arch().unwrap(),
                 PAUSE_CONTAINER_VERSION
             )
+        );
+    }
+}
+#[cfg(test)]
+mod test_get_resource_to_reserve_in_range {
+    use crate::get_resource_to_reserve_in_range;
+    #[test]
+    fn get_resource_to_reserve_in_range_ok() {
+        let total_resource_on_instance = 3 * 1000;
+        let start_range = 2000;
+        let end_range = 4000;
+        let percentage = 50;
+
+        assert_eq!(
+            get_resource_to_reserve_in_range(
+                total_resource_on_instance,
+                start_range,
+                end_range,
+                percentage
+            ),
+            5
         );
     }
 }

@@ -35,6 +35,10 @@ evictionHard:
   {{@key}}: "{{this}}"
   {{~/each}}
 {{~/if}}
+kubeReserved:
+  {{~#each settings.kubernetes.kube-reserved}}
+  {{@key}}: "{{this}}"
+  {{~/each}}
 resolvConf: "/etc/resolv.conf"
 hairpinMode: hairpin-veth
 cgroupDriver: systemd

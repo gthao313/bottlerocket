@@ -318,6 +318,14 @@ The following settings are optional and allow you to further configure your clus
     "nodefs.inodesFree" = "15Mi"
     "pid.available" = "15%"
     ```
+* `settings.kubernetes.kube-reserved`: Resources reserved for node components.
+  * Example user data for setting up kube reserved:
+    ```
+    [settings.kubernetes.kube-reserved]
+    cpu = "1"
+    memory = "1024Mi"
+    ephemeral-storage = "1Gi"
+    ```
 
 You can also optionally specify static pods for your node with the following settings.
 Static pods can be particularly useful when running in standalone mode.
