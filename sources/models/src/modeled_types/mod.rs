@@ -62,6 +62,12 @@ pub mod error {
             field: String,
             source: serde_plain::Error,
         },
+
+        #[snafu(display("Invalid Cpu Manager policy '{}'", input))]
+        InvalideCpuManagerPolicy {
+            input: String,
+            source: serde_plain::Error,
+        },
     }
 }
 

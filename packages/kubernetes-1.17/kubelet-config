@@ -39,6 +39,7 @@ kubeReserved:
   {{~#each settings.kubernetes.kube-reserved}}
   {{@key}}: "{{this}}"
   {{~/each}}
+cpuManagerPolicy: {{settings.kubernetes.cpu-manager-policy}}
 resolvConf: "/etc/resolv.conf"
 hairpinMode: hairpin-veth
 cgroupDriver: systemd

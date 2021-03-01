@@ -64,6 +64,7 @@ cluster-domain = "cluster.local"
 standalone-mode = false
 authentication-mode = "aws"
 kube-reserved.ephemeral-storage = "1Gi"
+cpu-manager-policy = "none"
 
 # Metrics
 [settings.metrics]

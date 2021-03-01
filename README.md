@@ -326,6 +326,7 @@ The following settings are optional and allow you to further configure your clus
     memory = "1024Mi"
     ephemeral-storage = "1Gi"
     ```
+* `settings.kubernetes.cpu-manager-policy`: Specifies the CPU manager policy. Possible values are `static` and `none`. Defaults to `none`.
 
 You can also optionally specify static pods for your node with the following settings.
 Static pods can be particularly useful when running in standalone mode.

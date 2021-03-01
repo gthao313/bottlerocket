@@ -102,6 +102,7 @@ use crate::modeled_types::{
     KubernetesAuthenticationMode, KubernetesBootstrapToken, KubernetesClusterName,
     KubernetesLabelKey, KubernetesLabelValue, KubernetesTaintValue,
     Lockdown, SingleLineString, SysctlKey, Url, ValidBase64, EvictionHardKey, ReservedResourcesKey,
+    CpuManagerPolicy
 };
 
 // Kubernetes static pod manifest settings
@@ -131,6 +132,7 @@ struct KubernetesSettings {
     // gatekeep all possible values, so we validate if eviction-hard and kube-reserved values are SingleLineString.
     eviction_hard: HashMap<EvictionHardKey, SingleLineString>,
     kube_reserved: HashMap<ReservedResourcesKey, SingleLineString>,
+    cpu_manager_policy: CpuManagerPolicy,
 
     // Settings where we generate a value based on the runtime environment.  The user can specify a
     // value to override the generated one, but typically would not.
