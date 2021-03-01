@@ -133,6 +133,7 @@ struct KubernetesSettings {
     eviction_hard: HashMap<EvictionHardKey, SingleLineString>,
     kube_reserved: HashMap<ReservedResourcesKey, SingleLineString>,
     cpu_manager_policy: CpuManagerPolicy,
+    allowed_unsafe_sysctls: Vec<SingleLineString>,
 
     // Settings where we generate a value based on the runtime environment.  The user can specify a
     // value to override the generated one, but typically would not.

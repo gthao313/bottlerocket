@@ -40,6 +40,9 @@ kubeReserved:
   {{@key}}: "{{this}}"
   {{~/each}}
 cpuManagerPolicy: {{settings.kubernetes.cpu-manager-policy}}
+{{~#if settings.kubernetes.allowed-unsafe-sysctls}}
+allowedUnsafeSysctls: {{settings.kubernetes.allowed-unsafe-sysctls}}
+{{~/if}}
 resolvConf: "/etc/resolv.conf"
 hairpinMode: hairpin-veth
 cgroupDriver: systemd
