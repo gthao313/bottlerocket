@@ -1645,6 +1645,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "kubelet-kube-reserved-and-eviction-hard"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "kubelet-standalone-tls-services"
 version = "0.1.0"
 dependencies = [
@@ -1653,6 +1660,13 @@ dependencies = [
 
 [[package]]
 name = "kubelet-standalone-tls-settings"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "kubelet-unsafe-sysctl-and-cpu-manager-policy"
 version = "0.1.0"
 dependencies = [
  "migration-helpers",
