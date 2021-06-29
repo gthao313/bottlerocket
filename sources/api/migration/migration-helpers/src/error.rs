@@ -99,6 +99,12 @@ pub enum Error {
         metadata: String,
         data: Vec<serde_json::Value>,
     },
+
+    #[snafu(display("Failed to delete file '{}': '{}'", path, source))]
+    RemoveFile {
+        path: String,
+        source: std::io::Error,
+    },
 }
 
 /// Result alias containing our Error type.
