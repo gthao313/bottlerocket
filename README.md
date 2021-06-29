@@ -358,6 +358,7 @@ The following settings are optional and allow you to further configure your clus
 * `settings.kubernetes.kube-api-burst`: The burst to allow while talking with kubernetes.
 * `settings.kubernetes.container-log-max-size`: The maximum size of container log file before it is rotated.
 * `settings.kubernetes.container-log-max-files`: The maximum number of container log files that can be present for a container.
+* `settings.kubernetes.cpu-manager-policy`: Specifies the CPU manager policy. Possible values are `static` and `none`. Defaults to `none`.
 
 You can also optionally specify static pods for your node with the following settings.
 Static pods can be particularly useful when running in standalone mode.
