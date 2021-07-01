@@ -361,6 +361,8 @@ The following settings are optional and allow you to further configure your clus
 * `settings.kubernetes.cpu-manager-policy`: Specifies the CPU manager policy. Possible values are `static` and `none`. Defaults to `none`. If you want to allow
 pods with certain resource characteristics to be granted increased CPU affinity and exclusivity on the node, you can set this setting to `static`. We recommend
 a full reboot if you change this setting after launch.
+* `settings.kubernetes.cpu-manager-reconcile-period`: Specifies the CPU manager reconcile period, which can configure CPU Manager Reconcile Kubelet CPU memory
+allocation to the cpuset cgroups repair cycle.
 
 You can also optionally specify static pods for your node with the following settings.
 Static pods can be particularly useful when running in standalone mode.
