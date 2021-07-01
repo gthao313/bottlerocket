@@ -80,6 +80,9 @@ pub mod error {
             input: String,
             source: serde_plain::Error,
         },
+
+        #[snafu(display("Invalid Cpu Manager reconcile period '{}'", input))]
+        InvalidKubernetesDurationValue { input: String },
     }
 }
 

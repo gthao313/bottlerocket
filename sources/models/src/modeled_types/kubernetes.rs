@@ -817,3 +817,53 @@ mod test_cpu_manager_policy {
         }
     }
 }
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// KubernetesDurationValue represents a string that contains a valid kubernetes duration value.
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct KubernetesDurationValue {
+    inner: String,
+}
+
+lazy_static! {
+    pub(crate) static ref CPU_MANAGER_RECONCILE_PERIOD: Regex = Regex::new(
+        r"^(([0-9.]+)(h))?(([0-9.]+)(m))?(([0-9.]+)(s))?$"
+    ).unwrap();
+}
+
+impl TryFrom<&str> for KubernetesDurationValue {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        ensure!(
+            CPU_MANAGER_RECONCILE_PERIOD.is_match(input),
+            error::InvalidKubernetesDurationValue { input }
+        );
+        Ok(KubernetesDurationValue {
+            inner: input.to_string(),
+        })
+    }
+}
+
+string_impls_for!(KubernetesDurationValue, "KubernetesDurationValue");
+
+#[cfg(test)]
+mod test_cpu_manager_reconcile_period {
+    use super::KubernetesDurationValue;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_tokens() {
+        for ok in &["99s", "20m", "1h", "1h2m3s", "4m5s", "2h3s"] {
+            KubernetesDurationValue::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_names() {
+        for err in &["100", "ten second", "1m2h", &"a".repeat(23)] {
+            KubernetesDurationValue::try_from(*err).unwrap_err();
+        }
+    }
+}
